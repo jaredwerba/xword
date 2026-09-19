@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 import time
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
@@ -68,6 +69,9 @@ class SearchJevSolver:
         self.jev_input_tokens = 0
         self.tf_tokens = 0
         self._search_cache: dict[tuple[str, str], list[str]] = {}
+        self._io_lock = threading.Lock()
+        self._grid_lock = threading.Lock()
+        self._tavily_sem = threading.Semaphore(2)
 
     def _log(self, msg: str) -> None:
         if self.verbose:
@@ -75,24 +79,40 @@ class SearchJevSolver:
 
     def _jev(self, state: Any, questions: dict[str, Any]) -> JevAnswers:
         answers = self.evaluate(state, questions)
-        self.jev_calls += 1
-        self.jev_input_tokens += answers.input_tokens
+        with self._io_lock:
+            self.jev_calls += 1
+            self.jev_input_tokens += answers.input_tokens
         return answers
 
     def _tavily(self, clue: str, pattern: str) -> list[str]:
         key = (clue, pattern)
-        if key in self._search_cache:
-            return self._search_cache[key]
-        hits = self.search(clue, pattern)
-        self.tavily_calls += 1
-        self._search_cache[key] = hits
+        with self._io_lock:
+            if key in self._search_cache:
+                return self._search_cache[key]
+        from . import tavily as tavily_mod
+
+        billed = True
+        with self._tavily_sem:
+            if getattr(tavily_mod, "exhausted", False):
+                hits = []
+                billed = False
+            else:
+                hits = self.search(clue, pattern)
+                # 402/433 trip exhausted; that HTTP was not a billed search.
+                if getattr(tavily_mod, "exhausted", False) and not hits:
+                    billed = False
+        with self._io_lock:
+            if billed:
+                self.tavily_calls += 1
+            self._search_cache[key] = hits
         self._log(f"    tavily {hits[:8]}")
         return hits
 
     def _tf(self, clue: str, pattern: str) -> list[str]:
         guesses, tokens = self.guess(clue, pattern, 8)
-        self.tf_calls += 1
-        self.tf_tokens += tokens
+        with self._io_lock:
+            self.tf_calls += 1
+            self.tf_tokens += tokens
         self._log(f"    tf {guesses}")
         return guesses
 
@@ -259,6 +279,69 @@ class SearchJevSolver:
         word = self._rank(grid, slot_id, guesses, "token-factory")
         return word, "token-factory"
 
+    def _run_region(self, grid: Grid, allowed: set[str], max_local: int = 28) -> int:
+        """Fill one connected component. Safe to run in parallel on disjoint regions."""
+        rejected: set[tuple[str, str]] = set()
+        skipped: set[str] = set()
+        fill_stack: list[tuple[str, str]] = []
+        steps = 0
+        while steps < max_local:
+            with self._grid_lock:
+                if not self._open(grid, allowed):
+                    break
+            unique_filled = False
+            with self._grid_lock:
+                for sid in list(self._open(grid, allowed)):
+                    short = self._wordlist(grid, sid, rejected)
+                    if len(short) != 1:
+                        continue
+                    pattern = grid.slot_pattern(sid)
+                    if sum(ch != EMPTY for ch in pattern) < 2:
+                        continue
+                    word = short[0]
+                    if grid.fill_slot(sid, word):
+                        rejected.add((sid, word))
+                        continue
+                    steps += 1
+                    unique_filled = True
+                    fill_stack.append((sid, word))
+                    self._log(f"[{steps}] {sid}={word} via wordlist")
+            if unique_filled:
+                skipped.clear()
+                continue
+            with self._grid_lock:
+                slot_id = self._select(grid, skipped, rejected, allowed)
+            if slot_id is None:
+                if not fill_stack:
+                    break
+                with self._grid_lock:
+                    undone_slot, undone_word = fill_stack.pop(0)
+                    grid.clear_slot(undone_slot)
+                    rejected.add((undone_slot, undone_word))
+                    fill_stack = [
+                        (sid, word)
+                        for sid, word in fill_stack
+                        if EMPTY not in grid.slot_pattern(sid)
+                        and grid.slot_pattern(sid) == word
+                    ]
+                skipped.clear()
+                continue
+            steps += 1
+            word, source = self._pick(grid, slot_id, rejected)
+            if not word:
+                skipped.add(slot_id)
+                continue
+            with self._grid_lock:
+                conflicts = grid.fill_slot(slot_id, word)
+            if conflicts:
+                rejected.add((slot_id, word))
+                skipped.add(slot_id)
+                continue
+            fill_stack.append((slot_id, word))
+            skipped.clear()
+            self._log(f"[{steps}] {slot_id}={word} via {source}")
+        return steps
+
     def _events(self, puzzle: Puzzle) -> Iterator[dict[str, Any]]:
         grid = puzzle.make_grid()
         rejected: set[tuple[str, str]] = set()
@@ -283,7 +366,7 @@ class SearchJevSolver:
             slot = grid.slots[sid]
             starters.append((slot.clue, grid.slot_pattern(sid)))
         if len(starters) > 1:
-            workers = min(8, len(starters))
+            workers = min(4, len(starters))
             with ThreadPoolExecutor(max_workers=workers) as pool:
                 list(pool.map(lambda job: self._tavily(*job), starters))
 
@@ -452,12 +535,61 @@ class SearchJevSolver:
 
     def solve(self, puzzle: Puzzle) -> SolveResult:
         def _run() -> SolveResult:
-            result = None
-            for event in self._events(puzzle):
-                if event["event"] == "result":
-                    result = event["result"]
-            assert result is not None
-            return result
+            grid = puzzle.make_grid()
+            regions = self._components(grid)
+            if len(regions) < 4:
+                result = None
+                for event in self._events(puzzle):
+                    if event["event"] == "result":
+                        result = event["result"]
+                assert result is not None
+                return result
+            started = time.perf_counter()
+            workers = min(4, len(regions))
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                list(pool.map(lambda region: self._run_region(grid, region), regions))
+
+            def _repair(region: set[str]) -> None:
+                leftover = [sid for sid in region if EMPTY in grid.slot_pattern(sid)]
+                if not leftover:
+                    return
+                payload = [
+                    {
+                        "id": sid,
+                        "clue": grid.slots[sid].clue,
+                        "pattern": grid.slot_pattern(sid),
+                        "length": str(grid.slots[sid].length),
+                    }
+                    for sid in leftover
+                ]
+                try:
+                    fills, tokens = fill_region(payload)
+                except RuntimeError:
+                    return
+                with self._io_lock:
+                    self.tf_calls += 1
+                    self.tf_tokens += tokens
+                for sid, word in fills.items():
+                    if sid not in leftover or len(word) != grid.slots[sid].length:
+                        continue
+                    with self._grid_lock:
+                        if not grid.fill_slot(sid, word):
+                            self._log(f"repair {sid}={word}")
+
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                list(pool.map(_repair, regions))
+            wall_ms = int((time.perf_counter() - started) * 1000)
+            return SolveResult(
+                grid=grid,
+                submitted=not self._open(grid),
+                steps=sum(1 for _ in grid.slots),
+                wall_ms=wall_ms,
+                jev_calls=self.jev_calls,
+                tavily_calls=self.tavily_calls,
+                tf_calls=self.tf_calls,
+                jev_input_tokens=self.jev_input_tokens,
+                tf_tokens=self.tf_tokens,
+            )
 
         return maybe_traceable("xword.solve")(_run)()
 

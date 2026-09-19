@@ -1,0 +1,45 @@
+{
+  "puzzle": "race_64x64",
+  "rows": [
+    {
+      "agent": "search-jev",
+      "puzzle": "race_64x64",
+      "slots": 1536,
+      "wall_ms": 511465,
+      "steps": 1536,
+      "submitted": false,
+      "tavily_calls": 476,
+      "jev_calls": 1343,
+      "tf_calls": 33,
+      "tf_tokens": 3598,
+      "jev_input_tokens": 948147,
+      "letter_accuracy": 0.9739583333333334,
+      "word_accuracy": 0.9583333333333334,
+      "solved": false,
+      "usd_tf": 0.006297,
+      "usd_jev": 0.039822,
+      "usd_tavily": 3.808,
+      "usd_total": 3.854119
+    },
+    {
+      "agent": "langgraph-tf",
+      "puzzle": "race_64x64",
+      "slots": 1536,
+      "wall_ms": 2008831,
+      "steps": 277,
+      "submitted": true,
+      "tavily_calls": 0,
+      "jev_calls": 0,
+      "tf_calls": 277,
+      "tf_tokens": 17659112,
+      "jev_input_tokens": 0,
+      "letter_accuracy": 0.9878472222222222,
+      "word_accuracy": 0.9739583333333334,
+      "solved": false,
+      "usd_tf": 30.903446,
+      "usd_jev": 0.0,
+      "usd_tavily": 0.0,
+      "usd_total": 30.903446
+    }
+  ]
+}

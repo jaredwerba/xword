@@ -1,0 +1,88 @@
+{
+  "written": "2026-09-19",
+  "author": "hermes",
+  "wordlist": {"n": 1663, "by_len": {"3": 392, "4": 697, "5": 499, "7": 75}},
+  "puzzles": [
+    {
+      "id": "example_3x3",
+      "kind": "constructed_mini",
+      "interlocking": true,
+      "shape": "3x3",
+      "slots": 6,
+      "slot_lengths": {"3": 6},
+      "components": 1,
+      "search_jev_live_letter_accuracy": 1.0
+    },
+    {
+      "id": "example_mini_5x5",
+      "kind": "constructed_mini",
+      "interlocking": true,
+      "shape": "5x5",
+      "slots": 10,
+      "slot_lengths": {"3": 4, "4": 4, "5": 2},
+      "components": 1,
+      "search_jev_live_letter_accuracy": 1.0
+    },
+    {
+      "id": "example_5x5_b",
+      "kind": "constructed_mini",
+      "interlocking": true,
+      "shape": "5x5",
+      "slots": 10,
+      "slot_lengths": {"3": 4, "4": 4, "5": 2},
+      "components": 1,
+      "search_jev_live_letter_accuracy": null,
+      "note": "No live search-jev row in recorded-offline.json"
+    },
+    {
+      "id": "example_7x7",
+      "kind": "constructed_mini",
+      "interlocking": true,
+      "shape": "7x7",
+      "slots": 22,
+      "slot_lengths": {"3": 18, "7": 4},
+      "components": 1,
+      "search_jev_live_letter_accuracy": null,
+      "note": "Best in-repo accuracy gold. Four 7-letter theme answers. Not raced."
+    },
+    {
+      "id": "race_16x16",
+      "kind": "generated_tiled_3x3",
+      "interlocking": false,
+      "shape": "16x16",
+      "slots": 96,
+      "slot_lengths": {"3": 96},
+      "components": 16,
+      "search_jev_letter_accuracy": 0.9167,
+      "langgraph_letter_accuracy": 1.0
+    },
+    {
+      "id": "race_32x32",
+      "kind": "generated_tiled_3x3",
+      "interlocking": false,
+      "shape": "32x32",
+      "slots": 384,
+      "slot_lengths": {"3": 384},
+      "components": 64
+    },
+    {
+      "id": "race_64x64",
+      "kind": "generated_tiled_3x3",
+      "interlocking": false,
+      "shape": "64x64",
+      "slots": 1536,
+      "slot_lengths": {"3": 1536},
+      "components": 256
+    },
+    {
+      "id": "boatload-272971",
+      "path": "/Users/jkw/nebiusFDE/data/external/boatload-272971.json",
+      "kind": "real_published_style",
+      "interlocking": true,
+      "shape": "13x13",
+      "slots": 60,
+      "slot_lengths": {"3": 13, "4": 30, "5": 5, "6": 2, "8": 8, "11": 2},
+      "note": "Old take-home external puzzle. Not imported into xword."
+    }
+  ]
+}

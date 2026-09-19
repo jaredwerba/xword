@@ -3,6 +3,8 @@
   "rows": [
     {
       "agent": "search-jev",
+      "puzzle": "race_16x16",
+      "slots": 96,
       "wall_ms": 166353,
       "steps": 96,
       "submitted": true,
@@ -13,10 +15,16 @@
       "jev_input_tokens": 65397,
       "letter_accuracy": 0.9166666666666666,
       "word_accuracy": 0.875,
-      "solved": false
+      "solved": false,
+      "usd_tf": 0.002672,
+      "usd_jev": 0.002747,
+      "usd_tavily": 0.496,
+      "usd_total": 0.501419
     },
     {
       "agent": "langgraph-tf",
+      "puzzle": "race_16x16",
+      "slots": 96,
       "wall_ms": 189974,
       "steps": 20,
       "submitted": true,
@@ -27,7 +35,11 @@
       "jev_input_tokens": 0,
       "letter_accuracy": 1.0,
       "word_accuracy": 1.0,
-      "solved": true
+      "solved": true,
+      "usd_tf": 0.424793,
+      "usd_jev": 0.0,
+      "usd_tavily": 0.0,
+      "usd_total": 0.424793
     }
   ]
 }

@@ -16,6 +16,9 @@ F = TypeVar("F", bound=Callable)
 def enable_tracing() -> bool:
     load_dotenv(ROOT / ".env")
     load_dotenv(ROOT / ".env.local")
+    flag = os.getenv("LANGCHAIN_TRACING_V2", "").strip().lower()
+    if flag in {"0", "false", "no", "off"}:
+        return False
     key = os.getenv("LANGSMITH_API_KEY") or os.getenv("LANGCHAIN_API_KEY")
     if not key:
         return False

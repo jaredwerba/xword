@@ -62,11 +62,15 @@ Live race vs [nebius-xword](https://nebius-xword.vercel.app) (same puzzle ids, D
 | 3×3 | 12.1s / 3,116 | 6.0–6.8s / **0** | search-jev |
 | mini 5×5 | 15.2s / 12,764 | 5.5–10s / **0** | search-jev |
 | 5×5-b | ~19s / 14.7k (recorded) | **7.9s / 0** | search-jev |
-| 16×16 (96 slots) | **190s / 242,739 / 100%** | **166s / 1,527 / 92% letters** | search-jev faster+cheaper; LangGraph closer to the key |
+| 16×16 (96 slots) | **190s / 242,739 / 100%** | **166s / 1,527 / 92% letters** | search-jev faster + 159× fewer TF tokens; LangGraph matches the key |
+| 32×32 (384 slots) | **786s / 2,126,397 / 100%** | **211s / 3,277 / 96.5% letters** | search-jev **3.7×** wall, **649×** fewer TF tokens |
+| 64×64 (1536 slots) | **2009s / 17.7M TF / 98.8% letters** | **511s / 3,598 TF / 97.4% letters, not submitted** | search-jev **3.9×** wall, **4,908×** fewer TF tokens; USD **$3.85 vs $30.90** |
 
-Token Factory is the cost axis of the old demo. search-jev is **$0 TF** on these fixtures. Tavily is a few searches; Jev is ~$0.042/MTok.
+Full USD (Token Factory $1.75/MTok + Jev $0.042/MTok + Tavily $0.008/search), 64×64, and the tiled-3×3 caveat: **[eval/SCALE.md](eval/SCALE.md)**. 16/32/64 boards are independent 3×3s, not interlocking Sundays. `solved` is key-match; a valid synonym fill is a miss.
 
-LangSmith project `xword`. Traced mini 5×5: [public run](https://smith.langchain.com/public/4c22b686-1477-4d6a-9df7-9d5339d4ff0c/r).
+Token Factory is the cost axis of the old demo. search-jev is **$0 TF** on the interlocking minis. At 32×32 Tavily ($1.69) dominates search-jev USD and it is still cheaper than LangGraph ($1.71 vs $3.72). At 64×64 that gap is **$3.85 vs $30.90**.
+
+LangSmith project `xword`. Traced mini 5×5: [public run](https://smith.langchain.com/public/4c22b686-1477-4d6a-9df7-9d5339d4ff0c/r). Scale 32/64 tracing is off (monthly unique-traces cap).
 
 ## 60-second demo script
 

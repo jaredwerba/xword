@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
@@ -19,6 +20,9 @@ from .traces import maybe_traceable
 TAVILY_URL = "https://api.tavily.com/search"
 WORD_RE = re.compile(r"\b[A-Za-z]{2,15}\b")
 SearchFn = Callable[[str], list[str]]
+# 402/433: Tavily pay-as-you-go (or credit) cap. Further HTTP is wasted.
+PAYGO_CODES = {402, 433}
+exhausted = False
 STOP = {
     "THE", "AND", "FOR", "WITH", "FROM", "THIS", "THAT", "HAVE", "WERE",
     "BEEN", "THEY", "THEM", "WHAT", "WHEN", "YOUR", "WILL", "WOULD",
@@ -50,6 +54,9 @@ def extract_words(text: str, pattern: str) -> list[str]:
 @maybe_traceable("tavily.search")
 def search_clue(clue: str, pattern: str, *, max_results: int = 3) -> list[str]:
     """Return pattern-fitting words mentioned in Tavily snippets."""
+    global exhausted
+    if exhausted:
+        return []
     load_env()
     key = os.getenv("TAVILY_API_KEY")
     if not key:
@@ -67,12 +74,23 @@ def search_clue(clue: str, pattern: str, *, max_results: int = 3) -> list[str]:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            data: dict[str, Any] = json.loads(response.read())
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", "replace")[:300]
-        raise RuntimeError(f"Tavily HTTP {exc.code}: {detail}") from exc
+    last: Exception | None = None
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                data: dict[str, Any] = json.loads(response.read())
+            break
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:300]
+            last = RuntimeError(f"Tavily HTTP {exc.code}: {detail}")
+            if exc.code in PAYGO_CODES:
+                exhausted = True
+                return []
+            if exc.code not in {429, 503} or attempt == 5:
+                raise last from exc
+            time.sleep(1.5 * (2**attempt))
+    else:
+        raise last or RuntimeError("Tavily failed")
 
     chunks = [str(data.get("answer") or "")]
     for hit in data.get("results") or []:

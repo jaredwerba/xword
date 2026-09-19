@@ -1,0 +1,26 @@
+{
+  "puzzle": "race_64x64",
+  "rows": [
+    {
+      "agent": "search-jev",
+      "puzzle": "race_64x64",
+      "slots": 1536,
+      "wall_ms": 570065,
+      "steps": 1536,
+      "submitted": false,
+      "tavily_calls": 488,
+      "jev_calls": 1373,
+      "tf_calls": 35,
+      "tf_tokens": 4597,
+      "jev_input_tokens": 914993,
+      "letter_accuracy": 0.9730902777777778,
+      "word_accuracy": 0.9544270833333334,
+      "solved": false,
+      "usd_tf": 0.008045,
+      "usd_jev": 0.03843,
+      "usd_tavily": 3.904,
+      "usd_total": 3.950474
+    }
+  ],
+  "note": "search-jev 64x64 while Tavily pay-as-you-go was exhausted mid-run. submitted=false. Not the credited rerun."
+}
