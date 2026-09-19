@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xword — Tavily grounds, Jev ranks, Token Factory writes leftovers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lime: #E0FF4F; --purple: #614EFA; --navy: #052B42; --ink: #001A2B;
+    --bg: #F3F4F5; --card: #FFFFFF; --line: #D9DEE2; --dim: #5B7285;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--navy);
+    font: 15px/1.55 Inter, -apple-system, sans-serif;
+  }
+  main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.2rem 4rem; }
+  header { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  header img { height: 36px; }
+  h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+  .sub { color: var(--dim); margin: .4rem 0 1.2rem; }
+  .byline { color: var(--dim); font-size: .9rem; margin: 0 0 1.4rem; }
+  .byline a { color: var(--purple); font-weight: 600; text-decoration: none; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem; }
+  .controls { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  select, button {
+    background: var(--card); color: var(--navy); border: 1px solid var(--line);
+    border-radius: 10px; padding: .55rem .85rem; font: inherit; font-weight: 500;
+  }
+  button.primary { background: var(--purple); border-color: var(--purple); color: #fff; font-weight: 700; cursor: pointer; }
+  button.primary:disabled { opacity: .55; }
+  .layout { display: grid; gap: 1rem; grid-template-columns: 18rem 1fr 18rem; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  #board { display: grid; gap: 2px; background: var(--line); border: 2px solid var(--navy);
+           border-radius: 8px; width: min(100%, 16rem); aspect-ratio: 1; margin: 0 auto; }
+  .cell { background: var(--card); display: flex; align-items: center; justify-content: center;
+          font-weight: 700; position: relative; }
+  .cell.block { background: var(--navy); }
+  .cell.filled { background: var(--lime); }
+  .cell .num { position: absolute; top: 2px; left: 3px; font-size: .65rem; color: var(--dim); font-weight: 500; }
+  #log {
+    background: var(--ink); color: #DDE9F2; border-radius: 10px; padding: .8rem;
+    font: 12px/1.65 ui-monospace, Menlo, monospace; min-height: 16rem; overflow: auto;
+    white-space: pre-wrap;
+  }
+  .ok { color: #8BE9C3; } .call { color: var(--lime); } .err { color: #FF8A93; }
+  .stats { display: flex; gap: .8rem; flex-wrap: wrap; margin: .8rem 0; font-variant-numeric: tabular-nums; }
+  .stats b { font-size: 1.15rem; }
+  .clues { font-size: .88rem; }
+  .clues h2 { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+  .tech { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 2rem; }
+  .tech h3 { margin: 0 0 .4rem; }
+  .tech h3 span { background: var(--lime); border-radius: 6px; padding: .05rem .4rem; }
+  section { margin-top: 2.2rem; }
+  video, .video-slot {
+    width: 100%; border-radius: 10px; background: var(--ink); min-height: 12rem;
+    display: flex; align-items: center; justify-content: center; color: #A9BFD0;
+  }
+  code { font-size: .85em; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="/nebius-logo.svg" alt="Nebius">
+    <h1>xword</h1>
+  </header>
+  <p class="sub">A crossword agent on the Nebius stack: Tavily looks up the clue, Jev ranks the shortlist, Token Factory writes only leftover wordplay, and Python owns the grid.</p>
+  <p class="byline"><strong>Jared Werba</strong> · <a href="https://github.com/jaredwerba/xword">source</a> · <a href="https://www.jwerba.com">jwerba.com</a></p>
+
+  <div class="controls">
+    <select id="puzzle"></select>
+    <button class="primary" id="solve">Solve</button>
+  </div>
+  <div class="stats" id="stats">
+    <div>wall <b id="wall">0.0s</b></div>
+    <div>tavily <b id="tavily">0</b></div>
+    <div>jev <b id="jev">0</b></div>
+    <div>tf tokens <b id="tftok">0</b></div>
+  </div>
+  <div class="layout">
+    <div class="card">
+      <h2 id="board-title">puzzle</h2>
+      <div id="board"></div>
+    </div>
+    <div class="card"><div id="log"></div></div>
+    <div class="card clues" id="clues"></div>
+  </div>
+
+  <section class="tech">
+    <div class="card"><h3><span>1</span> Engine</h3><p>Slots, crossings, <code>fill_slot</code>. A wrong answer cannot corrupt the grid.</p></div>
+    <div class="card"><h3><span>2</span> Tavily</h3><p>Grounding. Search <code>crossword clue "…" N letters</code>. Blueprint recipe 03.</p></div>
+    <div class="card"><h3><span>3</span> Jev</h3><p>Ranks ≤12 candidates. Does not invent letters. Gateway evaluation, not chat.</p></div>
+    <div class="card"><h3><span>4</span> Token Factory</h3><p>Last resort for wordplay. Not used for routing or submit.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>Eval vs the LangGraph baseline</h2>
+    <p>Old Nebius-XWord (same 5×5 family): 2–5 DeepSeek V4 Pro turns, ~19–39s, thousands of TF tokens per turn of generation. 13×13: 98 turns, 996s, 2.44M tokens. This agent’s gold bar is a solved 5×5 with TF tokens in the low thousands and wall well under that.</p>
+    <p>Harness: <code>python -m eval.run_eval --solver empty|oracle|backtrack|search-jev</code>. LangSmith project <code>xword</code>.</p>
+  </section>
+
+  <section class="card">
+    <h2>60-second demo</h2>
+    <p>Record after the 5×5 is green. Four sentences: engine owns crossings; Tavily grounds; Jev ranks; Token Factory only writes leftovers.</p>
+    <div class="video-slot" id="video-slot">Video slot — drop the take-home recording here</div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let puzzle = null, t0 = 0, timer = null;
+
+async function loadList() {
+  const data = await (await fetch("/api/puzzles")).json();
+  $("puzzle").innerHTML = data.puzzles.map(p => `<option value="${p.id}">${p.title}</option>`).join("");
+  await loadPuzzle(data.puzzles[0].id);
+}
+async function loadPuzzle(id) {
+  puzzle = await (await fetch(`/api/puzzles/${id}`)).json();
+  $("board-title").textContent = puzzle.title;
+  renderBoard(puzzle.grid);
+  const A = Object.entries(puzzle.clues.across || {}).map(([n,c]) => `<div><b>${n}A</b> ${c}</div>`).join("");
+  const D = Object.entries(puzzle.clues.down || {}).map(([n,c]) => `<div><b>${n}D</b> ${c}</div>`).join("");
+  $("clues").innerHTML = `<h2>Across</h2>${A}<h2>Down</h2>${D}`;
+}
+function renderBoard(rows) {
+  const cols = rows[0].length;
+  const board = $("board");
+  board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  board.innerHTML = "";
+  rows.forEach((row, r) => {
+    [...row].forEach((ch, c) => {
+      const cell = document.createElement("div");
+      cell.className = "cell" + (ch === "#" ? " block" : (ch !== "." ? " filled" : ""));
+      if (ch !== "#" && ch !== ".") cell.textContent = ch;
+      board.appendChild(cell);
+    });
+  });
+}
+function log(html) { const el = $("log"); el.innerHTML += html + "\n"; el.scrollTop = el.scrollHeight; }
+
+$("puzzle").onchange = (e) => loadPuzzle(e.target.value);
+$("solve").onclick = async () => {
+  $("solve").disabled = true;
+  $("log").textContent = "";
+  t0 = performance.now();
+  timer = setInterval(() => $("wall").textContent = ((performance.now()-t0)/1000).toFixed(1) + "s", 100);
+  const res = await fetch("/api/solve/stream", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ puzzle_id: $("puzzle").value }),
+  });
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const parts = buf.split("\n\n");
+    buf = parts.pop();
+    for (const part of parts) {
+      const line = part.split("\n").filter(l => l.startsWith("data:")).map(l => l.slice(5).trim()).join("");
+      if (!line) continue;
+      const ev = JSON.parse(line);
+      if (ev.event === "fill") {
+        log(`<span class="ok">${ev.slot}=${ev.word}</span> <span class="call">via ${ev.source}</span>`);
+        if (ev.grid) renderBoard(ev.grid);
+        $("tavily").textContent = ev.tavily_calls;
+        $("jev").textContent = ev.jev_calls;
+        $("tftok").textContent = ev.tf_tokens;
+      } else if (ev.event === "undo") {
+        log(`<span class="err">undo ${ev.slot}=${ev.word}</span>`);
+      } else if (ev.event === "consider") {
+        log(`${ev.slot} ${ev.pattern} ${ev.clue}`);
+      } else if (ev.event === "done") {
+        if (ev.grid) renderBoard(ev.grid);
+        $("tavily").textContent = ev.tavily_calls;
+        $("jev").textContent = ev.jev_calls;
+        $("tftok").textContent = ev.tf_tokens;
+        const score = ev.score ? ` letters ${(ev.score.letter_accuracy*100).toFixed(0)}% solved=${ev.score.solved}` : "";
+        log(`<span class="ok">done ${ev.wall_ms}ms tf_tokens=${ev.tf_tokens}${score}</span>`);
+      } else if (ev.event === "error") {
+        log(`<span class="err">${ev.message}</span>`);
+      }
+    }
+  }
+  clearInterval(timer);
+  $("wall").textContent = ((performance.now()-t0)/1000).toFixed(1) + "s";
+  $("solve").disabled = false;
+};
+loadList();
+</script>
+</body>
+</html>

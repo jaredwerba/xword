@@ -1,0 +1,50 @@
+{
+  "id": "example_7x7",
+  "title": "Pinwheel crossword (7x7)",
+  "grid": [
+    "...#...",
+    "...#...",
+    ".......",
+    "##...##",
+    ".......",
+    "...#...",
+    "...#..."
+  ],
+  "clues": {
+    "across": {
+      "1": "Moo maker",
+      "4": "Blacktop stuff",
+      "7": "\"___ you kidding?\"",
+      "8": "Historic period",
+      "9": "Aretha Franklin anthem",
+      "11": "Can material",
+      "12": "Refined, like a gala gown",
+      "16": "___ guitar",
+      "17": "Sticky stuff",
+      "18": "Number of pins in bowling",
+      "19": "You, to a shepherd?"
+    },
+    "down": {
+      "1": "Garage occupant",
+      "2": "Miner's find",
+      "3": "Cowboy film genre",
+      "4": "Like the Mutant Ninja Turtles of cartoon fame",
+      "5": "Rainbow's shape",
+      "6": "Snitch",
+      "10": "Sty dweller",
+      "12": "Have dinner",
+      "13": "Fib",
+      "14": "At this very moment",
+      "15": "Little piggy, in a nursery rhyme"
+    }
+  },
+  "solution": [
+    "COW#TAR",
+    "ARE#ERA",
+    "RESPECT",
+    "##TIN##",
+    "ELEGANT",
+    "AIR#GOO",
+    "TEN#EWE"
+  ]
+}

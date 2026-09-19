@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 120
+    }
+  },
+  "rewrites": [
+    { "source": "/api/puzzles", "destination": "/api/index?__path=/api/puzzles" },
+    { "source": "/api/puzzles/:id", "destination": "/api/index?__path=/api/puzzles/:id" },
+    { "source": "/api/solve/stream", "destination": "/api/index?__path=/api/solve/stream" }
+  ]
+}

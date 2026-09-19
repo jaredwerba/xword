@@ -1,0 +1,34 @@
+{
+  "id": "example_5x5_b",
+  "title": "Mini crossword B (5x5, trickier clues)",
+  "grid": [
+    "...##",
+    "....#",
+    ".....",
+    "#....",
+    "##..."
+  ],
+  "clues": {
+    "across": {
+      "1": "Loneliest number, in song",
+      "4": "Landlord's due",
+      "6": "Movie-set walk-on",
+      "8": "Duck, or its bluish green",
+      "9": "Reuben bread"
+    },
+    "down": {
+      "1": "Smelter's input",
+      "2": "\"Who's ___?\"",
+      "3": "Key that submits",
+      "5": "Cafeteria carrier",
+      "7": "Pub pint"
+    }
+  },
+  "solution": [
+    "ONE##",
+    "RENT#",
+    "EXTRA",
+    "#TEAL",
+    "##RYE"
+  ]
+}

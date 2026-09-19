@@ -1,0 +1,34 @@
+{
+  "id": "example_mini_5x5",
+  "title": "Mini crossword (5x5)",
+  "grid": [
+    "##...",
+    "#....",
+    ".....",
+    "....#",
+    "...##"
+  ],
+  "clues": {
+    "across": {
+      "1": "Peach center",
+      "4": "Spare in a car trunk",
+      "5": "Where to get a haircut",
+      "6": "Once ___ a time",
+      "7": "Basketball hoop attachment"
+    },
+    "down": {
+      "1": "One at home in a cockpit",
+      "2": "Wrinkle remover",
+      "3": "Perfect gymnastics score",
+      "4": "Sticky roll",
+      "5": "Star at the center of our solar system"
+    }
+  },
+  "solution": [
+    "##PIT",
+    "#TIRE",
+    "SALON",
+    "UPON#",
+    "NET##"
+  ]
+}

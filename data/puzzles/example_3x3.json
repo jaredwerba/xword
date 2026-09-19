@@ -1,0 +1,26 @@
+{
+  "id": "example_3x3",
+  "title": "Tiny smoke-test square (3x3)",
+  "grid": [
+    "...",
+    "...",
+    "..."
+  ],
+  "clues": {
+    "across": {
+      "1": "Whiskered house pet",
+      "4": "\"___ we there yet?\"",
+      "5": "Half a score"
+    },
+    "down": {
+      "1": "Animal that purrs",
+      "2": "\"We ___ the champions\"",
+      "3": "Number of dimes in a dollar"
+    }
+  },
+  "solution": [
+    "CAT",
+    "ARE",
+    "TEN"
+  ]
+}
