@@ -55,9 +55,17 @@ Four solvers share one scorer (`eval/metrics.py`):
 
 Fixtures: `data/puzzles/example_3x3.json`, two 5×5s, `example_7x7.json`.
 
-Gold bar (2026-09-19, live): **mini 5×5 `solved=true` in 7.7s**, **0 Token Factory tokens**, 2 Tavily calls, 8 Jev calls. 3×3: 6.9s, 0 TF tokens. LangGraph V4 Pro on the same 5×5 family was ~19–39s of generation.
+Live race vs [nebius-xword](https://nebius-xword.vercel.app) (same puzzle ids, DeepSeek V4 Pro LangGraph vs search-jev):
 
-LangSmith project `xword`. One traced mini 5×5: [public run](https://smith.langchain.com/public/4c22b686-1477-4d6a-9df7-9d5339d4ff0c/r).
+| Puzzle | LangGraph wall / TF tokens | search-jev wall / TF tokens | Winner |
+|---|---|---|---|
+| 3×3 | 12.1s / 3,116 | 6.0–6.8s / **0** | search-jev |
+| mini 5×5 | 15.2s / 12,764 | 5.5–10s / **0** | search-jev |
+| 5×5-b | ~19s / 14.7k (recorded) | **7.9s / 0** | search-jev |
+
+Token Factory is the cost axis of the old demo. search-jev is **$0 TF** on these fixtures. Tavily is a few searches; Jev is ~$0.042/MTok.
+
+LangSmith project `xword`. Traced mini 5×5: [public run](https://smith.langchain.com/public/4c22b686-1477-4d6a-9df7-9d5339d4ff0c/r).
 
 ## 60-second demo script
 

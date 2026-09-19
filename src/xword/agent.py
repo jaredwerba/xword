@@ -136,7 +136,6 @@ class SearchJevSolver:
             "pattern": pattern,
             "source": source,
             "options": options,
-            "grid": grid.render(),
         }
         if len(options) == 1:
             word = options[0]
@@ -183,8 +182,9 @@ class SearchJevSolver:
     ) -> tuple[str | None, str]:
         pattern = grid.slot_pattern(slot_id)
         clue = grid.slots[slot_id].clue
+        filled = sum(ch != EMPTY for ch in pattern)
         short = self._wordlist(grid, slot_id, rejected)
-        if short:
+        if filled >= 2 and short:
             word = self._rank(grid, slot_id, short, "wordlist")
             if word:
                 return word, "wordlist"
@@ -193,10 +193,31 @@ class SearchJevSolver:
             for w in self._tavily(clue, pattern)
             if (slot_id, w) not in rejected
         ]
-        word = self._rank(grid, slot_id, hits, "tavily")
-        if word:
-            return word, "tavily"
-        guesses = [w for w in self._tf(clue, pattern) if (slot_id, w) not in rejected]
+        extras = [
+            w
+            for w in candidates(pattern, self.words)
+            if (slot_id, w) not in rejected
+        ][:WORDLIST_MAX]
+        mixed = list(dict.fromkeys(hits + extras))
+        # Wordlist-only Jev on a first letter is how NAME beat NEXT for "Who's ___?".
+        # Need Tavily or TF when the slot is still underconstrained.
+        if hits:
+            word = self._rank(grid, slot_id, mixed or hits, "tavily")
+            if word in hits:
+                return word, "tavily"
+            word = self._rank(grid, slot_id, hits, "tavily")
+            if word:
+                return word, "tavily"
+        if filled >= 2 and (short or extras):
+            word = self._rank(grid, slot_id, short or extras, "wordlist")
+            if word:
+                return word, "wordlist"
+        wordset = {w.upper() for w in self.words}
+        guesses = [
+            w
+            for w in self._tf(clue, pattern)
+            if (slot_id, w) not in rejected and w in wordset
+        ]
         word = self._rank(grid, slot_id, guesses, "token-factory")
         return word, "token-factory"
 
@@ -219,6 +240,39 @@ class SearchJevSolver:
                 }
                 log.append({"event": "submit"})
                 break
+            # Unique wordlist hits don't need Jev or Tavily.
+            unique_filled = False
+            for sid in list(self._open(grid)):
+                short = self._wordlist(grid, sid, rejected)
+                if len(short) != 1:
+                    continue
+                pattern = grid.slot_pattern(sid)
+                if sum(ch != EMPTY for ch in pattern) < 2:
+                    continue
+                word = short[0]
+                if grid.fill_slot(sid, word):
+                    rejected.add((sid, word))
+                    continue
+                steps += 1
+                unique_filled = True
+                fill_stack.append((sid, word))
+                event = {
+                    "event": "fill",
+                    "slot": sid,
+                    "word": word,
+                    "source": "wordlist",
+                    "grid": grid.render().split("\n"),
+                    "tavily_calls": self.tavily_calls,
+                    "jev_calls": self.jev_calls,
+                    "tf_calls": self.tf_calls,
+                    "tf_tokens": self.tf_tokens,
+                }
+                log.append(event)
+                self._log(f"[{steps}] {sid}={word} via wordlist")
+                yield event
+            if unique_filled:
+                skipped.clear()
+                continue
             slot_id = self._select(grid, skipped, rejected)
             if slot_id is None:
                 if not fill_stack:

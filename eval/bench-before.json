@@ -1,0 +1,58 @@
+{
+  "rows": [
+    {
+      "agent": "langgraph-tf",
+      "puzzle": "example_3x3",
+      "wall_ms": 12095,
+      "solved": true,
+      "letter_accuracy": 1.0,
+      "tokens": 3116,
+      "tf_tokens": 3116,
+      "tavily_calls": 0,
+      "jev_calls": 0,
+      "error": null,
+      "est_usd": 0.0054529999999999995
+    },
+    {
+      "agent": "search-jev",
+      "puzzle": "example_3x3",
+      "wall_ms": 6032,
+      "solved": true,
+      "letter_accuracy": 1.0,
+      "tokens": 0,
+      "tf_tokens": 0,
+      "tavily_calls": 3,
+      "jev_calls": 5,
+      "jev_input_tokens": 3077,
+      "error": null,
+      "est_usd": 0.024129234
+    },
+    {
+      "agent": "langgraph-tf",
+      "puzzle": "example_mini_5x5",
+      "wall_ms": 15234,
+      "solved": true,
+      "letter_accuracy": 1.0,
+      "tokens": 12764,
+      "tf_tokens": 12764,
+      "tavily_calls": 0,
+      "jev_calls": 0,
+      "error": null,
+      "est_usd": 0.022337
+    },
+    {
+      "agent": "search-jev",
+      "puzzle": "example_mini_5x5",
+      "wall_ms": 5466,
+      "solved": true,
+      "letter_accuracy": 1.0,
+      "tokens": 0,
+      "tf_tokens": 0,
+      "tavily_calls": 2,
+      "jev_calls": 8,
+      "jev_input_tokens": 4809,
+      "error": null,
+      "est_usd": 0.016201978
+    }
+  ]
+}

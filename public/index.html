@@ -99,7 +99,7 @@
 
   <section class="card">
     <h2>Eval vs the LangGraph baseline</h2>
-    <p>Old Nebius-XWord (same 5×5 family): 2–5 DeepSeek V4 Pro turns, ~19–39s, thousands of TF tokens per turn of generation. 13×13: 98 turns, 996s, 2.44M tokens. This agent’s gold bar is a solved 5×5 with TF tokens in the low thousands and wall well under that.</p>
+    <p>Live race against <a href="https://nebius-xword.vercel.app">nebius-xword.vercel.app</a> (same ids, V4 Pro LangGraph): 3×3 12.1s / 3,116 TF tokens vs 6s / 0. Mini 5×5 15.2s / 12,764 vs 5.5–10s / 0. Trickier 5×5-b ~19s / 14.7k vs 7.9s / 0.</p>
     <p>Harness: <code>python -m eval.run_eval --solver empty|oracle|backtrack|search-jev</code>. LangSmith project <code>xword</code>.</p>
   </section>
 

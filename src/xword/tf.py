@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 from .paths import ROOT
 from .solver import matches
+from .traces import maybe_traceable
 
 TF_BASE_URL = "https://api.tokenfactory.nebius.com/v1"
 TF_MODEL = "deepseek-ai/DeepSeek-V4-Pro"
@@ -22,6 +23,7 @@ def load_env() -> None:
     load_dotenv(ROOT / ".env.local")
 
 
+@maybe_traceable("tf.guess")
 def guess_words(clue: str, pattern: str, k: int = 8) -> tuple[list[str], int]:
     """Return (guesses, total_tokens)."""
     load_env()

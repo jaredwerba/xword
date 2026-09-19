@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 
 from .paths import ROOT
 from .solver import matches
+from .traces import maybe_traceable
 
 TAVILY_URL = "https://api.tavily.com/search"
 WORD_RE = re.compile(r"\b[A-Za-z]{2,15}\b")
@@ -46,7 +47,8 @@ def extract_words(text: str, pattern: str) -> list[str]:
     return found
 
 
-def search_clue(clue: str, pattern: str, *, max_results: int = 5) -> list[str]:
+@maybe_traceable("tavily.search")
+def search_clue(clue: str, pattern: str, *, max_results: int = 3) -> list[str]:
     """Return pattern-fitting words mentioned in Tavily snippets."""
     load_env()
     key = os.getenv("TAVILY_API_KEY")
@@ -55,7 +57,7 @@ def search_clue(clue: str, pattern: str, *, max_results: int = 5) -> list[str]:
     payload = {
         "api_key": key,
         "query": query_for(clue, pattern),
-        "max_results": max_results,
+        "max_results": min(max_results, 3),
         "search_depth": "basic",
         "include_answer": True,
     }

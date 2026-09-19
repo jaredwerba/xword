@@ -19,6 +19,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 from .paths import ROOT
+from .traces import maybe_traceable
 
 TYPESAFE_URL = "https://api.typesafe.ai/v1/systemone"
 OPENROUTER_URL = "https://openrouter.ai/api/alpha/decisions"
@@ -142,6 +143,7 @@ def _payload(kind: str, model: str, state: Any, questions: dict[str, Any]) -> di
     return body
 
 
+@maybe_traceable("jev.system_one")
 def system_one(
     state: Any,
     questions: dict[str, Any],
