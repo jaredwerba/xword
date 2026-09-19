@@ -1,0 +1,33 @@
+{
+  "puzzle": "race_16x16",
+  "rows": [
+    {
+      "agent": "search-jev",
+      "wall_ms": 166353,
+      "steps": 96,
+      "submitted": true,
+      "tavily_calls": 62,
+      "jev_calls": 96,
+      "tf_calls": 16,
+      "tf_tokens": 1527,
+      "jev_input_tokens": 65397,
+      "letter_accuracy": 0.9166666666666666,
+      "word_accuracy": 0.875,
+      "solved": false
+    },
+    {
+      "agent": "langgraph-tf",
+      "wall_ms": 189974,
+      "steps": 20,
+      "submitted": true,
+      "tavily_calls": 0,
+      "jev_calls": 0,
+      "tf_calls": 20,
+      "tf_tokens": 242739,
+      "jev_input_tokens": 0,
+      "letter_accuracy": 1.0,
+      "word_accuracy": 1.0,
+      "solved": true
+    }
+  ]
+}

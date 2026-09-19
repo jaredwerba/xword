@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Iterator
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
+from itertools import pairwise
 from typing import Any
 
 from .grid import EMPTY, Grid, Puzzle
@@ -12,7 +14,7 @@ from .jev import JevAnswers, system_one
 from .paths import WORDLIST_PATH
 from .solver import candidates
 from .tavily import search_clue
-from .tf import guess_words
+from .tf import fill_region, guess_words
 from .traces import maybe_traceable
 
 WORDLIST_MAX = 12
@@ -94,8 +96,36 @@ class SearchJevSolver:
         self._log(f"    tf {guesses}")
         return guesses
 
-    def _open(self, grid: Grid) -> list[str]:
-        return [sid for sid in grid.slots if EMPTY in grid.slot_pattern(sid)]
+    def _open(self, grid: Grid, allowed: set[str] | None = None) -> list[str]:
+        sids = [sid for sid in grid.slots if EMPTY in grid.slot_pattern(sid)]
+        if allowed is not None:
+            sids = [sid for sid in sids if sid in allowed]
+        return sids
+
+    def _components(self, grid: Grid) -> list[set[str]]:
+        parent = {sid: sid for sid in grid.slots}
+
+        def find(sid: str) -> str:
+            while parent[sid] != sid:
+                parent[sid] = parent[parent[sid]]
+                sid = parent[sid]
+            return sid
+
+        def union(a: str, b: str) -> None:
+            ra, rb = find(a), find(b)
+            parent[rb] = ra
+
+        cells: dict[tuple[int, int], list[str]] = {}
+        for sid, slot in grid.slots.items():
+            for cell in slot.cells():
+                cells.setdefault(cell, []).append(sid)
+        for sids in cells.values():
+            for a, b in pairwise(sids):
+                union(a, b)
+        groups: dict[str, set[str]] = {}
+        for sid in grid.slots:
+            groups.setdefault(find(sid), set()).add(sid)
+        return list(groups.values())
 
     def _wordlist(self, grid: Grid, slot_id: str, rejected: set[tuple[str, str]]) -> list[str]:
         pattern = grid.slot_pattern(slot_id)
@@ -109,9 +139,15 @@ class SearchJevSolver:
             return found
         return []
 
-    def _select(self, grid: Grid, skipped: set[str], rejected: set[tuple[str, str]]) -> str | None:
+    def _select(
+        self,
+        grid: Grid,
+        skipped: set[str],
+        rejected: set[tuple[str, str]],
+        allowed: set[str] | None = None,
+    ) -> str | None:
         ranked: list[tuple[int, int, str]] = []
-        for slot_id in self._open(grid):
+        for slot_id in self._open(grid, allowed):
             if slot_id in skipped:
                 continue
             pattern = grid.slot_pattern(slot_id)
@@ -213,6 +249,8 @@ class SearchJevSolver:
             if word:
                 return word, "wordlist"
         wordset = {w.upper() for w in self.words}
+        if self.tf_calls >= 32:
+            return None, "token-factory"
         guesses = [
             w
             for w in self._tf(clue, pattern)
@@ -231,6 +269,24 @@ class SearchJevSolver:
         started = time.perf_counter()
         yield {"event": "start", "puzzle": puzzle.id, "title": puzzle.title}
 
+        regions = self._components(grid)
+        region_i = 0
+        allowed = regions[0] if regions else set()
+        # One Tavily per component in parallel — 16 isolated 3x3s should not
+        # wait 16 serial search round-trips before the first fill.
+        starters: list[tuple[str, str]] = []
+        for region in regions:
+            open_ids = [sid for sid in region if EMPTY in grid.slot_pattern(sid)]
+            if not open_ids:
+                continue
+            sid = min(open_ids)
+            slot = grid.slots[sid]
+            starters.append((slot.clue, grid.slot_pattern(sid)))
+        if len(starters) > 1:
+            workers = min(8, len(starters))
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                list(pool.map(lambda job: self._tavily(*job), starters))
+
         while steps < self.max_steps:
             if not self._open(grid):
                 yield {
@@ -240,9 +296,17 @@ class SearchJevSolver:
                 }
                 log.append({"event": "submit"})
                 break
+            if not self._open(grid, allowed):
+                region_i += 1
+                skipped.clear()
+                fill_stack.clear()
+                if region_i >= len(regions):
+                    break
+                allowed = regions[region_i]
+                continue
             # Unique wordlist hits don't need Jev or Tavily.
             unique_filled = False
-            for sid in list(self._open(grid)):
+            for sid in list(self._open(grid, allowed)):
                 short = self._wordlist(grid, sid, rejected)
                 if len(short) != 1:
                     continue
@@ -273,10 +337,15 @@ class SearchJevSolver:
             if unique_filled:
                 skipped.clear()
                 continue
-            slot_id = self._select(grid, skipped, rejected)
+            slot_id = self._select(grid, skipped, rejected, allowed)
             if slot_id is None:
                 if not fill_stack:
-                    break
+                    region_i += 1
+                    skipped.clear()
+                    if region_i >= len(regions):
+                        break
+                    allowed = regions[region_i]
+                    continue
                 undone_slot, undone_word = fill_stack.pop(0)
                 grid.clear_slot(undone_slot)
                 rejected.add((undone_slot, undone_word))
@@ -333,6 +402,38 @@ class SearchJevSolver:
             log.append(event)
             self._log(f"[{steps}] {slot_id}={word} via {source}")
             yield event
+
+        # Cheap Token Factory repair on leftover components (not the whole grid).
+        for region in regions:
+            leftover = [
+                sid for sid in region if EMPTY in grid.slot_pattern(sid)
+            ]
+            if not leftover:
+                continue
+            payload = [
+                {
+                    "id": sid,
+                    "clue": grid.slots[sid].clue,
+                    "pattern": grid.slot_pattern(sid),
+                    "length": str(grid.slots[sid].length),
+                }
+                for sid in leftover
+            ]
+            try:
+                fills, tokens = fill_region(payload)
+            except RuntimeError:
+                continue
+            self.tf_calls += 1
+            self.tf_tokens += tokens
+            for sid, word in fills.items():
+                if sid not in leftover:
+                    continue
+                if len(word) != grid.slots[sid].length:
+                    continue
+                conflicts = grid.fill_slot(sid, word)
+                if not conflicts:
+                    steps += 1
+                    self._log(f"[{steps}] {sid}={word} via tf-repair")
 
         wall_ms = int((time.perf_counter() - started) * 1000)
         result = SolveResult(

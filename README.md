@@ -62,6 +62,7 @@ Live race vs [nebius-xword](https://nebius-xword.vercel.app) (same puzzle ids, D
 | 3×3 | 12.1s / 3,116 | 6.0–6.8s / **0** | search-jev |
 | mini 5×5 | 15.2s / 12,764 | 5.5–10s / **0** | search-jev |
 | 5×5-b | ~19s / 14.7k (recorded) | **7.9s / 0** | search-jev |
+| 16×16 (96 slots) | **190s / 242,739 / 100%** | **166s / 1,527 / 92% letters** | search-jev faster+cheaper; LangGraph closer to the key |
 
 Token Factory is the cost axis of the old demo. search-jev is **$0 TF** on these fixtures. Tavily is a few searches; Jev is ~$0.042/MTok.
 
