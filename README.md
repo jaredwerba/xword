@@ -57,6 +57,8 @@ Fixtures: `data/puzzles/example_3x3.json`, two 5×5s, `example_7x7.json`.
 
 Gold bar (2026-09-19, live): **mini 5×5 `solved=true` in 7.7s**, **0 Token Factory tokens**, 2 Tavily calls, 8 Jev calls. 3×3: 6.9s, 0 TF tokens. LangGraph V4 Pro on the same 5×5 family was ~19–39s of generation.
 
+LangSmith project `xword`. One traced mini 5×5: [public run](https://smith.langchain.com/public/4c22b686-1477-4d6a-9df7-9d5339d4ff0c/r).
+
 ## 60-second demo script
 
 1. Engine owns the grid; `fill_slot` rejects a crossing conflict.
