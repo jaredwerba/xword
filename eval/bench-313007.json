@@ -1,5 +1,7 @@
 {
   "puzzle": "bestcrosswords-313007",
+  "note": "BestCrosswords 313007 Stick With It! 15x15, 2026-09-19. No published key until next day; langgraph-tf fill is complete, crossing-legal, and matches the on-a-stick theme plus standard crosswordese, so it is the reference key.",
+  "reference": "langgraph-tf",
   "rows": [
     {
       "agent": "search-jev",
@@ -82,8 +84,55 @@
       "usd_total": 0.905219,
       "letter_accuracy_vs_reference": 1.0,
       "solved_vs_reference": true
+    },
+    {
+      "agent": "search-jev-no-tavily",
+      "puzzle": "bestcrosswords-313007",
+      "slots": 80,
+      "wall_ms": 80448,
+      "steps": 250,
+      "submitted": false,
+      "tavily_calls": 0,
+      "jev_calls": 12,
+      "tf_calls": 33,
+      "tf_tokens": 5097,
+      "jev_input_tokens": 4714,
+      "letters_filled": 12,
+      "open_cells": 186,
+      "letter_fill": 0.06451612903225806,
+      "words_filled": 3,
+      "word_fill": 0.0375,
+      "letter_accuracy_vs_reference": 0.043010752688172046,
+      "solved_vs_reference": false,
+      "grid": [
+        "WISE#A.S#......",
+        "....#R.T#......",
+        ".....C.E#......",
+        ".....#.A..##...",
+        "###....M.......",
+        "......##....###",
+        "....#....#.....",
+        "...#.......#...",
+        ".....#....#....",
+        "###....##......",
+        "#...........###",
+        "...##....#.....",
+        "......#........",
+        "......#...#....",
+        "......#...#...."
+      ],
+      "usd_tf": 0.00892,
+      "usd_jev": 0.000198,
+      "usd_tavily": 0.0,
+      "usd_total": 0.009118,
+      "jev_stats": {
+        "token-factory/first/choice": 4,
+        "token-factory/none/choice": 23,
+        "token-factory/none/noul": 4,
+        "token-factory/first/noul": 1,
+        "wordlist/none/choice": 2
+      },
+      "jev_reranks": []
     }
-  ],
-  "note": "BestCrosswords 313007 Stick With It! 15x15, 2026-09-19. No published key until next day; langgraph-tf fill is complete, crossing-legal, and matches the on-a-stick theme plus standard crosswordese, so it is the reference key.",
-  "reference": "langgraph-tf"
+  ]
 }
