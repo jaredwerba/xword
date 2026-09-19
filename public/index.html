@@ -65,7 +65,7 @@
 <body>
 <main>
   <header>
-    <img src="/nebius-logo.svg" alt="Nebius">
+    <img id="logo" src="/nebius-logo.svg" alt="Nebius">
     <h1>xword</h1>
   </header>
   <p class="sub">A crossword agent on the Nebius stack: Tavily looks up the clue, Jev ranks the shortlist, Token Factory writes only leftover wordplay, and Python owns the grid.</p>
@@ -111,15 +111,19 @@
 </main>
 <script>
 const $ = (id) => document.getElementById(id);
+const BASE = location.pathname.replace(/\/$/, "").endsWith("/xword") || location.pathname.startsWith("/xword/")
+  ? "/xword" : "";
+const api = (p) => BASE + p;
 let puzzle = null, t0 = 0, timer = null;
+$("logo").src = api("/nebius-logo.svg");
 
 async function loadList() {
-  const data = await (await fetch("/api/puzzles")).json();
+  const data = await (await fetch(api("/api/puzzles"))).json();
   $("puzzle").innerHTML = data.puzzles.map(p => `<option value="${p.id}">${p.title}</option>`).join("");
   await loadPuzzle(data.puzzles[0].id);
 }
 async function loadPuzzle(id) {
-  puzzle = await (await fetch(`/api/puzzles/${id}`)).json();
+  puzzle = await (await fetch(api(`/api/puzzles/${id}`))).json();
   $("board-title").textContent = puzzle.title;
   renderBoard(puzzle.grid);
   const A = Object.entries(puzzle.clues.across || {}).map(([n,c]) => `<div><b>${n}A</b> ${c}</div>`).join("");
@@ -148,7 +152,7 @@ $("solve").onclick = async () => {
   $("log").textContent = "";
   t0 = performance.now();
   timer = setInterval(() => $("wall").textContent = ((performance.now()-t0)/1000).toFixed(1) + "s", 100);
-  const res = await fetch("/api/solve/stream", {
+  const res = await fetch(api("/api/solve/stream"), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ puzzle_id: $("puzzle").value }),
