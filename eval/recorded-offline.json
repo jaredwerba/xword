@@ -1,0 +1,24 @@
+{
+  "note": "Offline solvers, 2026-09-19, no API keys. search-jev live numbers land after TAVILY_API_KEY + Jev + NEBIUS_API_KEY.",
+  "runs": 1,
+  "results": {
+    "empty": {
+      "example_3x3": {"letter_accuracy": 0, "word_accuracy": 0, "solved": 0},
+      "example_mini_5x5": {"letter_accuracy": 0, "word_accuracy": 0, "solved": 0},
+      "example_5x5_b": {"letter_accuracy": 0, "word_accuracy": 0, "solved": 0},
+      "example_7x7": {"letter_accuracy": 0, "word_accuracy": 0, "solved": 0}
+    },
+    "oracle": {
+      "example_3x3": {"letter_accuracy": 1, "word_accuracy": 1, "solved": 1},
+      "example_mini_5x5": {"letter_accuracy": 1, "word_accuracy": 1, "solved": 1},
+      "example_5x5_b": {"letter_accuracy": 1, "word_accuracy": 1, "solved": 1},
+      "example_7x7": {"letter_accuracy": 1, "word_accuracy": 1, "solved": 1}
+    },
+    "backtrack": {
+      "example_3x3": {"letter_accuracy": 0.11, "word_accuracy": 0, "solved": 0},
+      "example_mini_5x5": {"letter_accuracy": 0, "word_accuracy": 0, "solved": 0},
+      "example_5x5_b": {"letter_accuracy": 0.11, "word_accuracy": 0, "solved": 0},
+      "example_7x7": {"letter_accuracy": 0.29, "word_accuracy": 0, "solved": 0}
+    }
+  }
+}
