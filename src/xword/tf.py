@@ -77,16 +77,19 @@ def fill_region(slots: list[dict[str, str]]) -> tuple[dict[str, str], int]:
     prompt = (
         "Fill these remaining crossword slots. Patterns use . for unknowns. "
         "Answers must be uppercase letters matching the pattern and length. "
-        "Crossings must agree.\n"
+        "Crossings must agree. Do not restrict answers to a short-word list; "
+        "theme entries and 6+ letter words are expected.\n"
         f"{listing}\n"
         'Return only JSON {"fills": {"1A": "CAT", ...}}'
     )
+    # One JSON object per leftover slot; 400 tokens is too small for a 15x15.
+    max_tokens = max(800, 60 * max(len(slots), 1))
     client = OpenAI(base_url=TF_BASE_URL, api_key=key)
     response = client.chat.completions.create(
         model=os.getenv("NEBIUS_MODEL") or TF_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.2,
-        max_tokens=400,
+        max_tokens=max_tokens,
     )
     text = response.choices[0].message.content or ""
     usage = getattr(response, "usage", None)

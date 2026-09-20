@@ -2,7 +2,7 @@
 
 Crossword agent for the Nebius FDE take-home.
 
-**Tavily grounds. Jev ranks. Token Factory writes leftovers. Python owns the grid.**
+**Python owns the grid. Wordlist + Jev rank tight patterns. Token Factory `fill_region` writes leftovers. Tavily is last resort.**
 
 Live: [www.jwerba.com/xword](https://www.jwerba.com/xword)  
 Source: this repo. The earlier LangGraph agent stays at [nebius-xword.vercel.app](https://nebius-xword.vercel.app) as the generation-loop baseline.
@@ -16,12 +16,12 @@ This agent never spends a Token Factory turn on “which slot” or “are we do
 | Layer | Product | Job |
 |---|---|---|
 | Engine | Python `Grid.fill_slot` | Crossings. A wrong word cannot corrupt state. |
-| Grounding | [Tavily](https://docs.tavily.com) | `crossword clue "…" N letters` — Blueprint [recipe 03](https://github.com/nebius/nebius-partner-cookbook/tree/main/cookbooks/03-real-time-data-tavily) |
-| Decision | Jev (`typesafe-ai/jev`) | Choice among ≤12 candidates + `none` |
-| Inference | [Nebius Token Factory](https://docs.tokenfactory.nebius.com) | Wordplay leftovers only |
+| Constrained | Wordlist + Jev (`typesafe-ai/jev`) | Unique / Choice among ≤12 after ≥2 letters. Crossing clues in Jev state. |
+| Leftovers | [Nebius Token Factory](https://docs.tokenfactory.nebius.com) `fill_region` | One generation call per leftover component. Not filtered to 3/4/5/7. |
+| Last resort | [Tavily](https://docs.tavily.com) | Only slots still empty after region fill. Single hit skips Jev. |
 | Observability | LangSmith | One trace per solve — Blueprint [recipe 07](https://github.com/nebius/nebius-partner-cookbook/tree/main/cookbooks/07-observability-langsmith) |
 
-Jev is not a crossword solver. It does not invent first letters. Ranking a Tavily/wordlist shortlist is the job.
+Jev is a ranker for a short list once the pattern is tight. Token Factory writes the leftover grid. Tavily is not the default writer.
 
 ## Run
 
@@ -75,9 +75,9 @@ LangSmith project `xword`. Traced mini 5×5: [public run](https://smith.langchai
 ## 60-second demo script
 
 1. Engine owns the grid; `fill_slot` rejects a crossing conflict.
-2. Tavily looks up the clue instead of asking a chat model to hallucinate CAT.
-3. Jev ranks the shortlist in a few hundred milliseconds.
-4. Token Factory only speaks when search and the wordlist are empty.
+2. Wordlist + Jev rank a slot only after ≥2 letters (tight pattern).
+3. Token Factory `fill_region` writes the leftover component in one generation call.
+4. Tavily runs only if that region pass left empties.
 
 ## License
 

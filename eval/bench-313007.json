@@ -133,6 +133,47 @@
         "wordlist/none/choice": 2
       },
       "jev_reranks": []
+    },
+    {
+      "agent": "search-jev-region",
+      "puzzle": "bestcrosswords-313007",
+      "slots": 80,
+      "wall_ms": 28625,
+      "steps": 73,
+      "submitted": true,
+      "tavily_calls": 0,
+      "jev_calls": 1,
+      "tf_calls": 2,
+      "tf_tokens": 2484,
+      "jev_input_tokens": 700,
+      "letters_filled": 186,
+      "open_cells": 186,
+      "letter_fill": 1.0,
+      "words_filled": 80,
+      "word_fill": 1.0,
+      "letter_accuracy_vs_reference": 0.989247311827957,
+      "solved_vs_reference": false,
+      "grid": [
+        "MAGI#ABS#AGHAST",
+        "ALAN#RAT#TREETO",
+        "POPSICLE#TENSER",
+        "STEER#SARI##OAT",
+        "###CARAMELAPPLE",
+        "TSETSE##CAGE###",
+        "ELMS#DOTE#ONTAP",
+        "AIM#CORNDOG#ICE",
+        "SPACE#ITEM#SKIS",
+        "###ANTE##AIKIDO",
+        "#COTTONCANDY###",
+        "SAP##STOW#ODORS",
+        "AREPAS#LOLLIPOP",
+        "MORELE#TKO#VETO",
+        "ELATED#SEW#EDIT"
+      ],
+      "usd_tf": 0.004347,
+      "usd_jev": 2.9e-05,
+      "usd_tavily": 0.0,
+      "usd_total": 0.004376
     }
   ]
 }
